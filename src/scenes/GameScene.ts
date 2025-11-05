@@ -244,14 +244,51 @@ export class GameScene extends Phaser.Scene {
       this.freeResets--;
       this.resetsText.setText(`Resets: ${this.freeResets}`);
 
-      // Flash resets text
+      // Positive pulse animation on resets text
       this.tweens.add({
         targets: this.resetsText,
-        alpha: { from: 1, to: 0.5 },
-        duration: 100,
+        scale: { from: 1, to: 1.2 },
+        duration: 150,
         yoyo: true,
-        repeat: 1
+        ease: 'Back.easeOut'
       });
+
+      // Create positive green clearing wave from input
+      const { width, height } = this.cameras.main;
+      const inputY = this.inputDisplay.y;
+
+      // Green flash overlay
+      const clearFlash = this.add.rectangle(0, 0, width, height, 0x00ff00, 0.2).setOrigin(0);
+      this.tweens.add({
+        targets: clearFlash,
+        alpha: 0,
+        duration: 300,
+        ease: 'Power2',
+        onComplete: () => clearFlash.destroy()
+      });
+
+      // Create sparkle particles around the input area
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        const particle = this.add.circle(
+          width / 2,
+          inputY,
+          4,
+          0x00ff00,
+          0.8
+        );
+
+        this.tweens.add({
+          targets: particle,
+          x: width / 2 + Math.cos(angle) * 100,
+          y: inputY + Math.sin(angle) * 50,
+          alpha: 0,
+          scale: 0.5,
+          duration: 400,
+          ease: 'Power2',
+          onComplete: () => particle.destroy()
+        });
+      }
 
       // Clear the input
       this.clearInput();
@@ -331,34 +368,63 @@ export class GameScene extends Phaser.Scene {
     this.activeBall = null;
     this.updateInputDisplay();
 
-    // Flash the input red
+    // Apply point penalty
+    const penalty = GAME_CONFIG.misfirePenalty;
+    this.score = Math.max(0, this.score - penalty);
+    this.scoreText.setText(`Score: ${this.score}`);
+
+    // Create penalty popup
+    this.createScorePopup(this.blaster.x, this.blaster.y - 40, -penalty);
+
+    // Flash the input red with shake
     this.inputDisplay.setColor('#ff0000');
-    this.time.delayedCall(200, () => {
-      this.inputDisplay.setColor(GAME_CONFIG.colors.secondary);
-    });
-
-    // Create misfire effect from blaster
-    const misfireShot = this.add.circle(
-      this.blaster.x,
-      this.blaster.y - 20,
-      8,
-      0xff0000,
-      0.8
-    );
-
     this.tweens.add({
-      targets: misfireShot,
-      y: this.blaster.y - 80,
-      alpha: 0,
-      scale: 0.3,
-      duration: 400,
-      ease: 'Power2',
+      targets: this.inputDisplay,
+      x: this.inputDisplay.x + 10,
+      duration: 50,
+      yoyo: true,
+      repeat: 5,
       onComplete: () => {
-        misfireShot.destroy();
-        // Update ball visuals after animation
-        this.updateBallVisuals();
+        this.inputDisplay.setColor(GAME_CONFIG.colors.secondary);
       }
     });
+
+    // Flash screen red
+    const { width, height } = this.cameras.main;
+    const flashOverlay = this.add.rectangle(0, 0, width, height, 0xff0000, 0.3).setOrigin(0);
+    this.tweens.add({
+      targets: flashOverlay,
+      alpha: 0,
+      duration: 300,
+      ease: 'Power2',
+      onComplete: () => flashOverlay.destroy()
+    });
+
+    // Create bigger misfire explosion from blaster
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const particle = this.add.circle(
+        this.blaster.x,
+        this.blaster.y - 20,
+        6,
+        0xff0000,
+        0.9
+      );
+
+      this.tweens.add({
+        targets: particle,
+        x: this.blaster.x + Math.cos(angle) * 60,
+        y: this.blaster.y - 20 + Math.sin(angle) * 60,
+        alpha: 0,
+        scale: 0.3,
+        duration: 500,
+        ease: 'Power2',
+        onComplete: () => particle.destroy()
+      });
+    }
+
+    // Update ball visuals after animation
+    this.time.delayedCall(100, () => this.updateBallVisuals());
   }
 
   private countMatchingLetters(word: string, input: string): number {

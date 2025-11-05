@@ -79,6 +79,7 @@ export const GAME_CONFIG = {
   // Score settings
   pointsPerHit: 10,
   comboMultiplier: 1.5,
+  misfirePenalty: 5,
 
   // UI settings
   fontSize: {
