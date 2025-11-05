@@ -37,6 +37,7 @@ export class GameScene extends Phaser.Scene {
   private isPaused: boolean = false;
   private pausedText!: Phaser.GameObjects.Text;
   private activeBall: Ball | null = null;
+  private previousActiveBall: Ball | null = null;
   private soundManager!: SoundManager;
   private isGameOver: boolean = false;
   private difficulty: DifficultyLevel = 'medium';
@@ -59,6 +60,7 @@ export class GameScene extends Phaser.Scene {
     this.currentInput = '';
     this.balls = [];
     this.activeBall = null;
+    this.previousActiveBall = null;
     this.isPaused = false;
   }
 
@@ -230,6 +232,7 @@ export class GameScene extends Phaser.Scene {
 
   private clearInput() {
     this.currentInput = '';
+    this.previousActiveBall = this.activeBall;
     this.activeBall = null;
     this.updateInputDisplay();
     this.updateBallVisuals();
@@ -291,6 +294,9 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // Track previous active ball for efficient updates
+    this.previousActiveBall = this.activeBall;
+
     if (bestMatch) {
       this.activeBall = bestMatch;
       bestMatch.matchedLetters = this.currentInput.length;
@@ -319,6 +325,12 @@ export class GameScene extends Phaser.Scene {
     // Play misfire sound
     this.soundManager.playMiss();
 
+    // Clear input immediately to prevent lag
+    this.currentInput = '';
+    this.previousActiveBall = this.activeBall;
+    this.activeBall = null;
+    this.updateInputDisplay();
+
     // Flash the input red
     this.inputDisplay.setColor('#ff0000');
     this.time.delayedCall(200, () => {
@@ -341,11 +353,12 @@ export class GameScene extends Phaser.Scene {
       scale: 0.3,
       duration: 400,
       ease: 'Power2',
-      onComplete: () => misfireShot.destroy()
+      onComplete: () => {
+        misfireShot.destroy();
+        // Update ball visuals after animation
+        this.updateBallVisuals();
+      }
     });
-
-    // Clear the invalid input
-    this.clearInput();
   }
 
   private countMatchingLetters(word: string, input: string): number {
@@ -358,77 +371,98 @@ export class GameScene extends Phaser.Scene {
   }
 
   private updateBallVisuals() {
-    for (const ball of this.balls) {
-      const isActive = ball === this.activeBall;
-      const matchedCount = isActive ? ball.matchedLetters : 0;
+    // OPTIMIZATION: Only update balls that have changed
+    // This dramatically reduces the number of text objects being destroyed/created
 
-      // Destroy old text and create new one with styled content
-      ball.text.destroy();
-
-      // Also destroy the old unmatched text if it exists
-      if ((ball as any).unmatchedText) {
-        (ball as any).unmatchedText.destroy();
-        (ball as any).unmatchedText = null;
+    // If no active ball and no previous active ball, update all balls (initial state)
+    if (!this.activeBall && !this.previousActiveBall) {
+      for (const ball of this.balls) {
+        this.updateSingleBallVisuals(ball, false, 0);
       }
+      return;
+    }
 
-      // Use the ball sprite's position for text placement
-      const ballX = ball.sprite.x;
-      const ballY = ball.sprite.y;
+    // Update previous active ball (if it exists and is different from current)
+    if (this.previousActiveBall && this.previousActiveBall !== this.activeBall) {
+      this.updateSingleBallVisuals(this.previousActiveBall, false, 0);
+    }
 
-      // Build the word text with matched portion highlighted
-      const fullWord = ball.word.toUpperCase();
-      const matchedPart = fullWord.substring(0, matchedCount);
-      const unmatchedPart = fullWord.substring(matchedCount);
+    // Update current active ball (if it exists)
+    if (this.activeBall) {
+      this.updateSingleBallVisuals(this.activeBall, true, this.activeBall.matchedLetters);
+    }
+  }
 
-      // Create text with manual color styling using Phaser's text styling
-      if (matchedCount > 0) {
-        // Create a container-like approach with colored segments
-        const matchedText = this.add.text(ballX, ballY, matchedPart, {
-          fontSize: '18px',
-          fontFamily: 'monospace',
-          fontStyle: 'bold',
-          color: '#00ff00'
-        });
+  private updateSingleBallVisuals(ball: Ball, isActive: boolean, matchedCount: number) {
+    // Safety check: if text already destroyed (ball was shot), skip
+    if (!ball.text || !ball.text.active) return;
 
-        const unmatchedText = this.add.text(ballX, ballY, unmatchedPart, {
-          fontSize: '18px',
-          fontFamily: 'monospace',
-          fontStyle: 'bold',
-          color: '#ffffff'
-        });
+    // Destroy old text and create new one with styled content
+    ball.text.destroy();
 
-        // Measure text width to position unmatched portion
-        const matchedWidth = matchedText.width;
-        matchedText.setOrigin(0, 0.5);
-        unmatchedText.setOrigin(0, 0.5);
+    // Also destroy the old unmatched text if it exists
+    if ((ball as any).unmatchedText) {
+      (ball as any).unmatchedText.destroy();
+      (ball as any).unmatchedText = null;
+    }
 
-        // Center the whole word
-        const totalWidth = matchedWidth + unmatchedText.width;
-        matchedText.x = ballX - totalWidth / 2;
-        unmatchedText.x = matchedText.x + matchedWidth;
+    // Use the ball sprite's position for text placement
+    const ballX = ball.sprite.x;
+    const ballY = ball.sprite.y;
 
-        // Store reference to the combined text (we'll use a container approach)
-        // For now, just update the main text reference to the first one
-        ball.text = matchedText;
+    // Build the word text with matched portion highlighted
+    const fullWord = ball.word.toUpperCase();
+    const matchedPart = fullWord.substring(0, matchedCount);
+    const unmatchedPart = fullWord.substring(matchedCount);
 
-        // Store the unmatched text reference so we can clean it up later
-        (ball as any).unmatchedText = unmatchedText;
-      } else {
-        // No matches - just show white text
-        ball.text = this.add.text(ballX, ballY, fullWord, {
-          fontSize: '18px',
-          fontFamily: 'monospace',
-          fontStyle: 'bold',
-          color: '#ffffff'
-        }).setOrigin(0.5);
-      }
+    // Create text with manual color styling using Phaser's text styling
+    if (matchedCount > 0) {
+      // Create a container-like approach with colored segments
+      const matchedText = this.add.text(ballX, ballY, matchedPart, {
+        fontSize: '18px',
+        fontFamily: 'monospace',
+        fontStyle: 'bold',
+        color: '#00ff00'
+      });
 
-      // Highlight active ball border
-      if (isActive) {
-        ball.sprite.setStrokeStyle(3, 0xffff00);
-      } else {
-        ball.sprite.setStrokeStyle(0);
-      }
+      const unmatchedText = this.add.text(ballX, ballY, unmatchedPart, {
+        fontSize: '18px',
+        fontFamily: 'monospace',
+        fontStyle: 'bold',
+        color: '#ffffff'
+      });
+
+      // Measure text width to position unmatched portion
+      const matchedWidth = matchedText.width;
+      matchedText.setOrigin(0, 0.5);
+      unmatchedText.setOrigin(0, 0.5);
+
+      // Center the whole word
+      const totalWidth = matchedWidth + unmatchedText.width;
+      matchedText.x = ballX - totalWidth / 2;
+      unmatchedText.x = matchedText.x + matchedWidth;
+
+      // Store reference to the combined text (we'll use a container approach)
+      // For now, just update the main text reference to the first one
+      ball.text = matchedText;
+
+      // Store the unmatched text reference so we can clean it up later
+      (ball as any).unmatchedText = unmatchedText;
+    } else {
+      // No matches - just show white text
+      ball.text = this.add.text(ballX, ballY, fullWord, {
+        fontSize: '18px',
+        fontFamily: 'monospace',
+        fontStyle: 'bold',
+        color: '#ffffff'
+      }).setOrigin(0.5);
+    }
+
+    // Highlight active ball border
+    if (isActive) {
+      ball.sprite.setStrokeStyle(3, 0xffff00);
+    } else {
+      ball.sprite.setStrokeStyle(0);
     }
   }
 
@@ -438,6 +472,22 @@ export class GameScene extends Phaser.Scene {
 
     // Play shoot sound
     this.soundManager.playShoot();
+
+    // CRITICAL FIX: Clear input immediately to prevent lag and dropped letters
+    // This ensures that any keystrokes after pressing Enter start fresh
+    this.currentInput = '';
+    this.previousActiveBall = this.activeBall;
+    this.activeBall = null;
+    this.updateInputDisplay();
+
+    // Remove ball from array immediately - this prevents visual/position updates
+    this.balls = this.balls.filter(b => b !== ball);
+
+    // Destroy text immediately - prevents frozen text during animation
+    ball.text.destroy();
+    if ((ball as any).unmatchedText) {
+      (ball as any).unmatchedText.destroy();
+    }
 
     // Create shot
     const shot = this.add.circle(
@@ -460,8 +510,8 @@ export class GameScene extends Phaser.Scene {
         this.createScorePopup(ballX, ballY, GAME_CONFIG.pointsPerHit);
         shot.destroy();
 
-        // Remove ball
-        this.removeBall(ball);
+        // Destroy sprite (text already destroyed, ball already removed from array)
+        ball.sprite.destroy();
 
         // Update score
         const oldScore = this.score;
@@ -485,8 +535,8 @@ export class GameScene extends Phaser.Scene {
           });
         }
 
-        // Clear input
-        this.clearInput();
+        // Update ball visuals after removal
+        this.updateBallVisuals();
       }
     });
   }
