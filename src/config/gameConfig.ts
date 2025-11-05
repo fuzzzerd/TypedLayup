@@ -69,7 +69,11 @@ export const GAME_CONFIG = {
   blasterWidth: 60,
   blasterHeight: 40,
   blasterColor: 0x00ff00,
-  blasterY: 550, // Y position from top
+  blasterY: 510, // Y position from top
+
+  // Ground area settings
+  groundHeight: 70,
+  groundColor: 0x1a1a1a,
 
   // Shot settings
   shotSpeed: 400,

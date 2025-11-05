@@ -81,11 +81,15 @@ export class GameScene extends Phaser.Scene {
       word.length >= 3 && word.length <= 8
     );
 
-    // Create enhanced blaster
-    this.createBlaster(width);
+    // Create ground area at bottom
+    const groundY = height - GAME_CONFIG.groundHeight;
+    this.add.rectangle(0, groundY, width, GAME_CONFIG.groundHeight, GAME_CONFIG.groundColor).setOrigin(0);
 
-    // Create danger zone indicator at bottom
-    this.add.rectangle(0, height - 20, width, 20, 0xff0000, 0.2).setOrigin(0);
+    // Create danger zone indicator on ground
+    this.add.rectangle(0, height - 10, width, 10, 0xff0000, 0.3).setOrigin(0);
+
+    // Create enhanced blaster (positioned above the ground)
+    this.createBlaster(width);
 
     // Create HUD
     this.scoreText = this.add.text(10, 10, `Score: ${this.score}`, {
@@ -106,7 +110,9 @@ export class GameScene extends Phaser.Scene {
       fontFamily: 'monospace'
     }).setOrigin(0.5, 0);
 
-    this.inputDisplay = this.add.text(width / 2, height - 30, '', {
+    // Position input display centered vertically in the ground area
+    const groundCenterY = groundY + (GAME_CONFIG.groundHeight / 2);
+    this.inputDisplay = this.add.text(width / 2, groundCenterY, '', {
       fontSize: GAME_CONFIG.fontSize.menu,
       color: GAME_CONFIG.colors.secondary,
       fontFamily: 'monospace',
