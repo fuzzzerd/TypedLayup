@@ -4,42 +4,101 @@ A retro-style typing basketball game built with Vite, TypeScript, and Phaser.js.
 
 ## Game Features
 
+- **Four Difficulty Levels**: Choose from Easy, Medium, Hard, or Insanity modes
 - **Typing Gameplay**: Type words displayed on falling basketballs to shoot them down
+- **Visual Feedback**: Matched letters turn green as you type, unmatched letters stay white
 - **Progressive Difficulty**: Game speed increases over time with more balls spawning
+- **Reset System**: Earn free resets (1 per 100 points) to clear typos with ESC
 - **Retro 16-bit Aesthetic**: Classic arcade-style graphics with grid background
 - **Sound Effects**: 8-bit style sounds for typing, shooting, hits, and misses
-- **High Score Tracking**: Persistent high scores saved in browser localStorage
-- **Multiple Scenes**: Welcome screen, gameplay, and high score display
+- **High Score Tracking**: Top 10 scores with player initials, date, and difficulty level
+- **Fullscreen Support**: Press CTRL+ENTER to toggle fullscreen mode
 
 ## How to Play
 
-1. **Start the Game**: Press SPACE on the welcome screen
-2. **Type Words**: Type the letters shown on the basketballs as they fall
-3. **Fire**: Press ENTER when you've completed a word to shoot the ball
-4. **Misfire Warning**: Pressing ENTER without a valid word match triggers a misfire (wastes time!)
-5. **Switch Targets**: Press ESC to clear your input and target a different ball
-6. **Don't Miss**: If a ball reaches the bottom, you lose a life (starts with 3 lives)
-7. **Pause**: Press CTRL+P to pause/resume the game
+**Getting Started:**
+
+- **Select Difficulty**: Use number keys (1-4) or arrow keys to choose difficulty level
+  - **Easy**: 2 balls max, slower spawns, gentler speeds
+  - **Medium**: 3 balls max, moderate spawns, balanced speeds
+  - **Hard**: 4 balls max, faster spawns, high speeds
+  - **Insanity**: 8 balls max, rapid spawns, extreme speeds
+- **Start the Game**: Press SPACE after selecting your difficulty
+
+**Gameplay:**
+
+- **Type Words**: Type the letters shown on the basketballs as they fall
+  - Matched letters turn **green** as you type correctly
+  - Unmatched letters remain **white**
+  - Active ball gets a **yellow border**
+- **Fire**: Press ENTER when you've completed the word to shoot the ball
+- **Misfire Warning**: Pressing ENTER without a valid word match triggers a misfire (wastes time!)
+- **Reset System**: Press ESC to clear your input and switch targets
+  - Costs 1 reset (you start with 1 free reset)
+  - Earn 1 additional reset for every 100 points scored
+- **Don't Miss**: If a ball reaches the bottom, you lose a life (starts with 3 lives)
+- **Pause**: Press CTRL+P to pause/resume the game
+- **Fullscreen**: Press CTRL+ENTER to toggle fullscreen mode
+
+**Scoring:**
+
+- **Top 10 Scores**: If your score makes the top 10, you'll be prompted to enter your initials (3 letters)
+- **View Leaderboard**: Press H from the welcome screen to view high scores with initials, date, and difficulty
 
 ## Controls
 
-- **Letter Keys**: Type words on the basketballs
+### Welcome Screen
+
+- **1, 2, 3, 4**: Select difficulty (Easy, Medium, Hard, Insanity)
+- **Arrow Keys**: Cycle through difficulty levels (Up/Left = previous, Down/Right = next)
+- **SPACE**: Start game with selected difficulty
+- **H**: View high scores
+- **CTRL+ENTER**: Toggle fullscreen
+
+### During Gameplay
+
+- **Letter Keys (A-Z)**: Type words on the basketballs
 - **ENTER**: Fire at the target (must match the word exactly)
-- **ESC**: Clear current input and switch targets
-- **SPACE**: Start new game (from welcome/high score screen)
+- **ESC**: Clear current input and switch targets (costs 1 reset)
 - **CTRL+P**: Pause/Resume game
-- **H**: View high scores (from welcome screen)
+- **CTRL+ENTER**: Toggle fullscreen
+
+### High Score Entry
+
+- **Letter Keys (A-Z)**: Enter your initials (3 letters)
+- **BACKSPACE**: Delete last letter
+- **ENTER**: Submit initials (requires exactly 3 letters)
+
+### High Score Screen
+
+- **SPACE**: Start new game
+- **ESC**: Return to welcome screen
 
 ## Game Configuration
 
-You can adjust difficulty settings in `src/config/gameConfig.ts`:
+The game includes four pre-configured difficulty levels in `src/config/gameConfig.ts`:
+
+### Difficulty Presets
+
+Each difficulty level has unique settings for:
+
+- `maxSimultaneousBalls`: Maximum balls on screen at once
+- `ballSpawnInterval`: Initial time between ball spawns (in milliseconds)
+- `minSpawnInterval`: Minimum spawn interval as difficulty progresses
+- `ballStartSpeed`: Initial falling speed
+- `ballMaxSpeed`: Maximum falling speed cap
+- `ballAcceleration`: Speed increase per difficulty tier
+
+**Easy**: 2 balls max, 3000ms spawn, 40-100 speed range
+**Medium**: 3 balls max, 2000ms spawn, 50-150 speed range
+**Hard**: 4 balls max, 1500ms spawn, 70-200 speed range
+**Insanity**: 8 balls max, 750ms spawn, 140-400 speed range
+
+### General Settings
 
 - `startingLives`: Number of lives (default: 3)
-- `maxSimultaneousBalls`: Maximum balls on screen at once (default: 3)
-- `ballSpawnInterval`: Time between ball spawns in ms (default: 2000)
-- `ballStartSpeed`: Initial falling speed (default: 50)
-- `ballMaxSpeed`: Maximum falling speed (default: 150)
-- `difficultyIncreaseInterval`: Time between difficulty increases (default: 30000)
+- `difficultyIncreaseInterval`: Time between difficulty increases (default: 30000ms)
+- `pointsPerHit`: Score per successful hit (default: 10)
 
 ## Adding More Words
 
@@ -99,22 +158,19 @@ npm run preview
 
 ## Project Structure
 
-```
+```md
 src/
 ├── config/
-│   └── gameConfig.ts      # Game configuration and settings
+│   └── gameConfig.ts         # Game configuration and difficulty presets
 ├── data/
-│   └── words.json         # Word list for the game
+│   └── words.json            # Word list for the game
 ├── scenes/
-│   ├── WelcomeScene.ts    # Main menu
-│   ├── GameScene.ts       # Main gameplay
-│   └── HighScoreScene.ts  # High scores display
+│   ├── WelcomeScene.ts       # Main menu with difficulty selection
+│   ├── GameScene.ts          # Main gameplay
+│   ├── InitialsInputScene.ts # Initials entry for top 10 scores
+│   └── HighScoreScene.ts     # High scores leaderboard
 ├── utils/
-│   └── SoundManager.ts    # 8-bit sound effect generator
-├── main.ts                # Phaser game initialization
-└── style.css              # Global styles
+│   └── SoundManager.ts       # 8-bit sound effect generator
+├── main.ts                   # Phaser game initialization
+└── style.css                 # Global styles
 ```
-
-## License
-
-MIT
