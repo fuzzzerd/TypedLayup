@@ -71,8 +71,8 @@ A retro-style typing basketball game built with Vite, TypeScript, and Phaser.js.
 
 ### High Score Screen
 
-- **SPACE**: Start new game
-- **ESC**: Return to welcome screen
+- **SPACE**: Return to main menu
+- **ESC**: Return to main menu
 
 ## Game Configuration
 

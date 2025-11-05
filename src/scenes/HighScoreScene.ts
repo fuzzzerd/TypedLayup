@@ -109,21 +109,15 @@ export class HighScoreScene extends Phaser.Scene {
     // Instructions
     const instructionsY = Math.max(startY + (highScores.length * 30) + 50, height - 120);
 
-    this.add.text(width / 2, instructionsY, 'Press SPACE to Play Again', {
+    this.add.text(width / 2, instructionsY, 'Press SPACE for Main Menu', {
       fontSize: GAME_CONFIG.fontSize.menu,
       color: GAME_CONFIG.colors.primary,
       fontFamily: 'monospace'
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, instructionsY + 35, 'Press ESC for Main Menu', {
-      fontSize: GAME_CONFIG.fontSize.small,
-      color: GAME_CONFIG.colors.text,
-      fontFamily: 'monospace'
-    }).setOrigin(0.5);
-
     // Input handlers
     this.input.keyboard?.on('keydown-SPACE', () => {
-      this.scene.start('GameScene');
+      this.scene.start('WelcomeScene');
     });
 
     this.input.keyboard?.on('keydown-ESC', () => {

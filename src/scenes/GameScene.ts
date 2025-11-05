@@ -49,7 +49,17 @@ export class GameScene extends Phaser.Scene {
   init(data: { difficulty?: DifficultyLevel }) {
     this.difficulty = data.difficulty || 'medium';
     this.difficultySettings = DIFFICULTY_PRESETS[this.difficulty];
+
+    // Reset all game state
     this.isGameOver = false;
+    this.score = 0;
+    this.lives = GAME_CONFIG.startingLives;
+    this.freeResets = 1;
+    this.currentDifficulty = 0;
+    this.currentInput = '';
+    this.balls = [];
+    this.activeBall = null;
+    this.isPaused = false;
   }
 
   create() {
