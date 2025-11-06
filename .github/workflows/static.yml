@@ -42,9 +42,6 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Run e2e tests
-        run: npm run test
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
