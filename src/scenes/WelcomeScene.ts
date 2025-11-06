@@ -1,10 +1,12 @@
 import Phaser from 'phaser';
 import { GAME_CONFIG } from '../config/gameConfig';
 import type { DifficultyLevel } from '../config/gameConfig';
+import { version } from '../../package.json';
 
 export class WelcomeScene extends Phaser.Scene {
   private selectedDifficulty: DifficultyLevel = 'medium';
   private difficultyTexts: Map<DifficultyLevel, Phaser.GameObjects.Text> = new Map();
+  private updateIndicator?: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'WelcomeScene' });
@@ -87,8 +89,28 @@ export class WelcomeScene extends Phaser.Scene {
       }).setOrigin(0.5);
     });
 
-    // Credits
-    this.add.text(width / 2, height - 30, '16-bit Typing Arcade', {
+    // Update indicator (shown when update is available)
+    this.updateIndicator = this.add.text(width / 2, 520, 'Press U to Update Now', {
+      fontSize: GAME_CONFIG.fontSize.small,
+      color: GAME_CONFIG.colors.secondary,
+      fontFamily: 'monospace'
+    }).setOrigin(0.5);
+
+    // Add pulsing animation to update indicator
+    this.tweens.add({
+      targets: this.updateIndicator,
+      alpha: { from: 1, to: 0.3 },
+      duration: 800,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+
+    // Check if update is available on creation
+    this.updateIndicator.setVisible((window as any).gameUpdateAvailable === true);
+
+    // Version
+    this.add.text(width / 2, height - 30, `v${version}`, {
       fontSize: GAME_CONFIG.fontSize.small,
       color: '#666666',
       fontFamily: 'monospace'
@@ -128,6 +150,13 @@ export class WelcomeScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-H', () => {
       this.scene.start('HighScoreScene');
     });
+
+    this.input.keyboard?.on('keydown-U', () => {
+      // Immediately trigger update if available
+      if ((window as any).gameUpdateAvailable && (window as any).gameUpdateCallback) {
+        (window as any).gameUpdateCallback();
+      }
+    });
   }
 
   private cycleDifficulty(direction: number) {
@@ -144,6 +173,13 @@ export class WelcomeScene extends Phaser.Scene {
 
     this.selectedDifficulty = difficulties[newIndex];
     this.updateDifficultyHighlight();
+  }
+
+  update() {
+    // Continuously check for update availability
+    if (this.updateIndicator) {
+      this.updateIndicator.setVisible((window as any).gameUpdateAvailable === true);
+    }
   }
 
   private updateDifficultyHighlight() {
