@@ -805,8 +805,12 @@ export class GameScene extends Phaser.Scene {
         (ball as any).unmatchedText.y = ball.sprite.y;
       }
 
-      // Check if ball reached bottom
-      if (ball.sprite.y > height + GAME_CONFIG.ballRadius) {
+      // Check if ball hit the ground
+      const groundY = height - GAME_CONFIG.groundHeight;
+      if (ball.sprite.y + GAME_CONFIG.ballRadius > groundY) {
+        // Create explosion effect at ground level
+        this.createExplosion(ball.sprite.x, groundY);
+
         this.removeBall(ball);
         this.loseLife();
 
