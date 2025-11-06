@@ -76,9 +76,9 @@ export class GameScene extends Phaser.Scene {
     // Create retro grid background
     this.createBackgroundGrid(width, height);
 
-    // Load words (filter to 3-8 letters)
+    // Load words (filter to 3-10 letters)
     this.words = wordsData.words.filter(word =>
-      word.length >= 3 && word.length <= 8
+      word.length >= 3 && word.length <= 10
     );
 
     // Create ground area at bottom
@@ -141,6 +141,15 @@ export class GameScene extends Phaser.Scene {
       callbackScope: this,
       loop: true
     });
+  }
+
+  private getFontSizeForWord(word: string): string {
+    // Dynamic font sizing based on word length to fit inside the ball
+    const length = word.length;
+    if (length <= 5) return '18px';
+    if (length <= 7) return '16px';
+    if (length <= 9) return '14px';
+    return '12px';
   }
 
   private createBackgroundGrid(width: number, height: number) {
@@ -488,17 +497,18 @@ export class GameScene extends Phaser.Scene {
     const unmatchedPart = fullWord.substring(matchedCount);
 
     // Create text with manual color styling using Phaser's text styling
+    const fontSize = this.getFontSizeForWord(ball.word);
     if (matchedCount > 0) {
       // Create a container-like approach with colored segments
       const matchedText = this.add.text(ballX, ballY, matchedPart, {
-        fontSize: '18px',
+        fontSize: fontSize,
         fontFamily: 'monospace',
         fontStyle: 'bold',
         color: '#00ff00'
       });
 
       const unmatchedText = this.add.text(ballX, ballY, unmatchedPart, {
-        fontSize: '18px',
+        fontSize: fontSize,
         fontFamily: 'monospace',
         fontStyle: 'bold',
         color: '#ffffff'
@@ -523,7 +533,7 @@ export class GameScene extends Phaser.Scene {
     } else {
       // No matches - just show white text
       ball.text = this.add.text(ballX, ballY, fullWord, {
-        fontSize: '18px',
+        fontSize: fontSize,
         fontFamily: 'monospace',
         fontStyle: 'bold',
         color: '#ffffff'
@@ -722,9 +732,10 @@ export class GameScene extends Phaser.Scene {
     graphics.generateTexture('basketball', GAME_CONFIG.ballRadius * 2, GAME_CONFIG.ballRadius * 2);
     graphics.destroy();
 
-    // Create text on ball
+    // Create text on ball with dynamic font sizing
+    const fontSize = this.getFontSizeForWord(word);
     const text = this.add.text(x, -GAME_CONFIG.ballRadius, word.toUpperCase(), {
-      fontSize: '18px',
+      fontSize: fontSize,
       color: '#ffffff',
       fontFamily: 'monospace',
       fontStyle: 'bold'
