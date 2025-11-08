@@ -76,9 +76,10 @@ export class GameScene extends Phaser.Scene {
     // Create retro grid background
     this.createBackgroundGrid(width, height);
 
-    // Load words (filter to 3-10 letters)
+    // Load words (filter based on difficulty)
+    const maxLength = this.difficulty === 'easy' ? 5 : 10;
     this.words = wordsData.words.filter(word =>
-      word.length >= 3 && word.length <= 10
+      word.length >= 3 && word.length <= maxLength
     );
 
     // Create ground area at bottom
