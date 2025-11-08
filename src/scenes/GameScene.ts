@@ -552,6 +552,7 @@ export class GameScene extends Phaser.Scene {
   private shootBall(ball: Ball) {
     const ballX = ball.sprite.x;
     const ballY = ball.sprite.y;
+    const points = ball.word.length; // Points equal to word length
 
     // Play shoot sound
     this.soundManager.playShoot();
@@ -590,7 +591,7 @@ export class GameScene extends Phaser.Scene {
         // Play hit sound and animation
         this.soundManager.playHit();
         this.createExplosion(ballX, ballY);
-        this.createScorePopup(ballX, ballY, GAME_CONFIG.pointsPerHit);
+        this.createScorePopup(ballX, ballY, points);
         shot.destroy();
 
         // Destroy sprite (text already destroyed, ball already removed from array)
@@ -598,7 +599,7 @@ export class GameScene extends Phaser.Scene {
 
         // Update score
         const oldScore = this.score;
-        this.score += GAME_CONFIG.pointsPerHit;
+        this.score += points;
         this.scoreText.setText(`Score: ${this.score}`);
 
         // Award free resets every 100 points
